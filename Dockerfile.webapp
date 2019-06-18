@@ -1,0 +1,13 @@
+# vi: ft=Dockerfile
+
+FROM golang AS builder
+
+WORKDIR $GOPATH/src/github.com/micahhausler/reinforce-grc302
+COPY . ./
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix nocgo -o /webapp ./webapp
+
+FROM scratch
+COPY --from=builder /webapp /webapp
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+EXPOSE 3000
+ENTRYPOINT ["/webapp"]

@@ -1,10 +1,12 @@
 package main
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/skuid/spec"
@@ -31,7 +33,7 @@ func hello(w http.ResponseWriter, r *http.Request) {
 	encoder.Encode(response)
 }
 
-func Proxy(w http.ResponseWriter, req *http.Request) {
+func proxy(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
@@ -43,8 +45,22 @@ func Proxy(w http.ResponseWriter, req *http.Request) {
 
 	req.ParseForm()
 	q := req.Form.Get("q")
+	method := req.Form.Get("method")
+	reqBody := req.Form.Get("body")
 
-	resp, err := http.Get(q)
+	config := &tls.Config{InsecureSkipVerify: true}
+	tr := &http.Transport{TLSClientConfig: config}
+	client := &http.Client{Transport: tr}
+
+	newReq, err := http.NewRequest(method, q, strings.NewReader(reqBody))
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		response.Error = err.Error()
+		encoder.Encode(response)
+		return
+	}
+
+	resp, err := client.Do(newReq)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		response.Error = err.Error()
@@ -72,7 +88,7 @@ func main() {
 	zap.ReplaceGlobals(l)
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/proxy/", Proxy)
+	mux.HandleFunc("/proxy/", proxy)
 	mux.Handle("/serve/", http.StripPrefix("/serve/", http.FileServer(http.Dir(*dir))))
 	mux.HandleFunc("/", hello)
 

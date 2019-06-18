@@ -1,0 +1,71 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: install-scripts
+data:
+  script.sh: |
+    #!/usr/bin/env sh
+    set -e
+    curl --output kubectl https://s3-us-west-2.amazonaws.com/amazon-eks/1.13.7/2019-06-11/bin/linux/amd64/kubectl
+    chmod 755 kubectl
+    mv kubectl /usr/local/sbin/
+  setup.sh: |
+    #!/usr/bin/env sh
+    set -e
+    yum install -y \
+      curl \
+      hostname \
+      htop \
+      net-tools \
+      procps-ng \
+      wget \
+      which
+    sleep 86400
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: al2
+  name: al2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: al2
+  template:
+    metadata:
+      labels:
+        app: al2
+    spec:
+      initContainers:
+      - image: amazonlinux:2
+        name: bins-setup
+        volumeMounts:
+        - name: bins
+          mountPath: /usr/local/sbin
+        - name: scripts
+          mountPath: /scripts
+        command:
+        - /bin/sh
+        - -c
+        - /scripts/script.sh
+      containers:
+      - image: amazonlinux:2
+        name: al2
+        command:
+        - /bin/sh
+        - -c
+        - /scripts/setup.sh
+        volumeMounts:
+        - name: bins
+          mountPath: /usr/local/sbin
+        - name: scripts
+          mountPath: /scripts
+      volumes:
+      - name: bins
+        emptyDir: {}
+      - name: scripts
+        configMap:
+          defaultMode: 0755
+          name: install-scripts
