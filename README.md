@@ -1,6 +1,6 @@
 # re:Inforce 2019 - GRC302 - Audibility in Kubernetes with Amazon EKS
 
-Talk given 6/25/2109
+Talk given 6/25/2019
 
 > Amazon Elastic Container Service for Kubernetes (Amazon EKS) is an AWS service
 offering a managed Kubernetes control plane for customers to orchestrate their
