@@ -12,7 +12,7 @@ forensic analysis of what happened in the system.
 
 ## Slides
 
-Coming soon
+[View on SlideShare](https://www.slideshare.net/AmazonWebServices/audibility-in-kubernetes-with-amazon-eks-grc302-aws-reinforce-2019)
 
 ## Overview
 
